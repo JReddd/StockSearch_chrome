@@ -1,0 +1,196 @@
+<!doctype html>
+
+<html>
+    <head>
+    <title>Stock Search</title>
+    <style type="text/css">
+    html {
+        background-color: #d8b93b;
+    }
+    body {
+        margin: 10px;
+        white-space: nowrap;
+        background-image: url('http://cs-server.usc.edu:37394/hw8Images/background_1.png');
+    }
+    thead tr:nth-child(odd) {
+        background-color: #f5f5f5;
+    }
+    tbody tr:nth-child(even) {
+        background-color: #f5f5f5;
+    }
+    tbody tr:nth-child(odd) {
+        background-color: white;
+    }
+    table {
+        margin-top: 10px;
+    }
+    #bt {
+        margin-top: 10px;
+    }
+    #title {
+        color: #d8b93b;
+    }
+    #favTitle {
+        color: #d8b93b;
+        margin: 0;
+    }
+    #refresh{
+        color: #d8b93b;
+    }
+    .glyphicon-star{
+        color:orange;
+    }
+    .changeFavP{
+        color: green;
+    }
+    .changeFavN{
+        color: red;
+    }
+    </style>
+    <script src="https://code.angularjs.org/1.5.0/angular.js"></script>
+    <script src="https://code.angularjs.org/1.5.0/angular-aria.js"></script>
+    <script src="https://code.angularjs.org/1.5.0/angular-animate.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/angular-material/1.1.5/angular-material.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/angular-material/1.1.5/angular-material.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+    <link href="https://gitcdn.github.io/bootstrap-toggle/2.2.2/css/bootstrap-toggle.min.css" rel="stylesheet">
+    <script src="https://gitcdn.github.io/bootstrap-toggle/2.2.2/js/bootstrap-toggle.min.js"></script>
+    <link href="dist/angular-bootstrap-toggle.min.css" rel="stylesheet"/>
+    <script src="dist/angular-bootstrap-toggle.min.js" type="text/javascript"></script>
+    
+    <script src="angular.js"></script>
+    </head>
+    <body ng-app="myapp" ng-controller="MainCtrl">
+    <div id="container">
+        <h2 id="title" align="center">Stock Market Search</h2>
+        <form id="quoteForm" name="myForm" novalidate>
+            <div ng-controller = "autocompleteController as ctrl">
+                <!-- <div class="col-md-3"> -->
+                    <!-- <input type="text" class="form-control" id="stock_symbol" placeholder="e.g. AAPL"> -->     
+                    <div style ='float: left; padding: 5px; width: 45%;'>
+                        <md-autocomplete
+                        flex required 
+                        md-selected-item="ctrl.selectedItem"
+                        md-search-text="ctrl.searchText"
+                        md-items="item in ctrl.querySearch(ctrl.searchText)"
+                        md-item-text="item.Symbol"
+                        md-delay="100"
+                        placeholder="e.g. AAPL"
+                        md-clear-button="false"
+                        md-dropdown-items="5"
+                        md-input-id="quote"
+                        md-input-name="myName">
+                        <div layout="row" class="item" layout-align="start center">
+                            <span md-highlight-text="ctrl.searchText">{{item.Symbol}}</span>
+                            &nbsp-&nbsp 
+                            <span md-highlight-text="ctrl.searchText">{{item.Name}}</span>
+                            (
+                            <span md-highlight-text="ctrl.searchText">{{item.Exchange}}</span>
+                            )
+                        </div>
+                        </md-autocomplete>
+                        <span ng-show="myForm.myName.$touched && myForm.myName.$invalid">Please enter a stock ticker symbol.</span>                 
+                    </div>
+                <!-- </div> -->
+                <!-- <div class="col-md-6"> -->
+                    <div style ='float: right; padding: 5px;'>
+                    <button class="btn btn-primary" id="getQuote" ng-disabled="myForm.myName.$invalid"><span class="glyphicon glyphicon-search" aria-hidden="true"></span> Get Quote</button>
+                    <button class="btn btn-default" id="clear" ng-click="clear()"><span class="glyphicon glyphicon-refresh" aria-hidden="true"></span> Clear</button>
+                    <button type="button" class='btn btn-default' id='star' ng-model="favToggle" ng-click="addCompany()"><span id="starBt" class="glyphicon glyphicon-star-empty" aria-hidden='true'></span></button>
+                    </div>
+                <!-- </div> -->
+            </div>
+        </form>
+
+        <table class='table' id="stockDetailTable">
+            <tr>
+                <th>Stock Ticker Symbol</th>
+                <td id='symbolTable'></td>
+            </tr>
+            <tr>
+                <th>Last Price</th>
+                <td id='lpTable'></td>
+            </tr>
+            <tr>
+                <th>Change (Change Percent)</th>
+                <td id='changeTable'></td>
+            </tr>
+            <tr>
+                <th>Timestamp</th>
+                <td id='timeTable'></td>
+            </tr>
+            <tr>
+                <th>Day's Range</th>
+                <td id='rangeTable'></td>
+            </tr>
+            <tr>
+                <th>Volume</th>
+                <td id='volumeTable'></td>
+            </tr>
+        </table>
+
+        <div class="panel-heading">
+                <h3 style ='float: left' id="favTitle" >Favorite List</h3>
+                <div style ='float: right' id="refresh">Automatic Refresh: <toggle  ng-model="autoRef" ng-change="autoRefresh()"></toggle>&nbsp<button id="refreshBt" class="btn btn-default" ng-click="refresh()"><span class="glyphicon glyphicon-refresh" ></span></button></div>
+                <div class="clearfix"></div>
+        </div>
+        <div class="panel-body" style="background: white">
+            <div class="row">
+                <form style ='float: left; padding: 5px;'>
+                
+                            <label for="sel1"> Sort By </label>
+                 
+                            <select id="sel1" ng-model="selected1" ng-change="switchSort1()">
+                                <option value="">Default</option>
+                                <option value="symbol">Symbol</option>
+                                <option value="price">Price</option>
+                                <option value="change">Change</option>
+                                <option value="changePercent">Change Percent</option>
+                                <option value="volume">Volume</option>
+                            </select>
+            
+                </form>
+                <form style ='float: left; padding: 5px;'>
+                 
+                            <label for="sel2"> Order </label>
+                       
+                            <select id="sel2" ng-model="selected2" ng-change="switchSort2()" ng-disabled="disabled">
+                                <option value="">Ascending</option>
+                                <option value="des">Descending</option>
+                            </select>
+              
+                </form>
+            </div>
+            <div class="table-responsive">
+                <table class="table" >
+                <thead>
+                    <tr>
+                        <th>Symbol</th>
+                        <th>Stock Price</th>
+                        <th>Change (Change Percent)</th>
+                        <th>Volume</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="tableFav" >
+                    <tr ng-repeat="company in companies|orderBy:orderByField:reverseSort" >
+                        <td class="symbolFav"><a href="#">{{ company.symbol }}</a></td>
+                        <td>{{ company.lastPrice }}</td>
+                        <td class="changeFav">{{ company.change }} ({{ company.changePercent }}) </td>
+                        <td>{{ company.volume }}</td>
+                        <td>
+                            <button ng-click="deleteCompany(company)" class='btn btn-default deleteRow'><span class='glyphicon glyphicon-trash' aria-hidden='true'></span></button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
